@@ -1,4 +1,16 @@
 { config, pkgs, inputs, ... }:
+let
+  caelestiaShellPkg = inputs.niri-caelestia-shell.packages.${pkgs.stdenv.hostPlatform.system}.caelestia-shell.override {
+    # upstream's nix/app2unit.nix pins app2unit 1.0.3 but inherits nixpkgs'
+    # postFixup for the current (1.4.4) version, whose substituteInPlace
+    # pattern doesn't exist in 1.0.3's script -> build fails. Use plain
+    # nixpkgs app2unit instead of the broken pinned override.
+    app2unit = pkgs.app2unit;
+    # Needed for colour theming (caelestia-cli) and for the idle-lock
+    # service below to be able to call the shell's lock IPC.
+    withCli = true;
+  };
+in
 {
   imports = [ inputs.niri-caelestia-shell.homeManagerModules.default ];
 
@@ -18,18 +30,7 @@
     enable = true;
     # Plain build, no caelestia-cli: upstream README states the CLI is
     # not required for the Niri port.
-    package = inputs.niri-caelestia-shell.packages.${pkgs.stdenv.hostPlatform.system}.caelestia-shell.override {
-      # upstream's nix/app2unit.nix pins app2unit 1.0.3 but inherits nixpkgs'
-      # postFixup for the current (1.4.4) version, whose substituteInPlace
-      # pattern doesn't exist in 1.0.3's script -> build fails. Use plain
-      # nixpkgs app2unit instead of the broken pinned override.
-      app2unit = pkgs.app2unit;
-      # Needed for colour theming: the shell only *reads*
-      # ~/.local/state/caelestia/scheme.json, it never generates it —
-      # that's caelestia-cli's job (`caelestia wallpaper -f <image>` /
-      # `caelestia scheme set -n <name>`).
-      withCli = true;
-    };
+    package = caelestiaShellPkg;
 
     # Without this, `caelestia` (the CLI) is only reachable from inside the
     # wrapped shell's own subprocess PATH (needed for its QML execDetached
@@ -342,6 +343,24 @@
     };
     Service = {
       ExecStart = "${pkgs.linux-wallpaperengine}/bin/linux-wallpaperengine --screen-root HDMI-A-1 --screen-root DP-1 2876210462";
+      Restart = "on-failure";
+      RestartSec = "3s";
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
+  };
+
+  # ===== Автолок (caelestia lock screen) =====
+  # caelestia-shell's own lock (modules/lock) only reacts to its IPC call,
+  # not to loginctl lock-session, so idle-based locking needs its own
+  # daemon calling that IPC directly.
+  systemd.user.services.idle = {
+    Unit = {
+      Description = "Idle daemon (auto-lock via caelestia)";
+      After = [ "graphical-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+    };
+    Service = {
+      ExecStart = ''${pkgs.swayidle}/bin/swayidle -w timeout 300 "${caelestiaShellPkg}/bin/caelestia-shell ipc call lock lock" before-sleep "${caelestiaShellPkg}/bin/caelestia-shell ipc call lock lock"'';
       Restart = "on-failure";
       RestartSec = "3s";
     };
