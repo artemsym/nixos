@@ -206,7 +206,7 @@ Rectangle {
             font.letterSpacing: 20/96*passwordFontSize
             font.family: defaultFont
             x: (parent.width - width) / 2
-            y: parent.height / 2 + 300
+            y: parent.height / 2 + 120
             echoMode: config.boolValue("passwordMask") ? TextInput.Password : null
             color: config.stringValue("passwordTextColor") || textColor
             selectionColor: textColor
@@ -285,7 +285,7 @@ Rectangle {
             width: parent.width / 4 * 1.5
             height: parent.height / 8 * 1.5
             x: (parent.width - width) / 2
-            y: passwordInput.y - height - 20
+            y: parent.height / 2 - 120 - height
             source: config.stringValue("background")
             smooth: true
             fillMode: Image.PreserveAspectFit
