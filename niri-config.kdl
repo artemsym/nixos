@@ -264,7 +264,7 @@ binds {
 
     Mod+Comma  { consume-window-into-column; }
     Mod+Period { expel-window-from-column; }
-    Mod+R { spawn "nwg-drawer"; }
+    Mod+R { spawn "caelestia-shell" "ipc" "call" "drawers" "toggle" "launcher"; }
     Mod+Shift+R { switch-preset-column-width-back; }
     Mod+Ctrl+R { reset-window-height; }
     Mod+F { fullscreen-window; }

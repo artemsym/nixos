@@ -24,7 +24,18 @@
       # pattern doesn't exist in 1.0.3's script -> build fails. Use plain
       # nixpkgs app2unit instead of the broken pinned override.
       app2unit = pkgs.app2unit;
+      # Needed for colour theming: the shell only *reads*
+      # ~/.local/state/caelestia/scheme.json, it never generates it —
+      # that's caelestia-cli's job (`caelestia wallpaper -f <image>` /
+      # `caelestia scheme set -n <name>`).
+      withCli = true;
     };
+
+    # Without this, `caelestia` (the CLI) is only reachable from inside the
+    # wrapped shell's own subprocess PATH (needed for its QML execDetached
+    # calls) — it's NOT on your interactive $PATH, so running `caelestia`
+    # by hand does nothing.
+    cli.enable = true;
 
     settings = {
       appearance = {
