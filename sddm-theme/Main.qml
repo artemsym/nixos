@@ -184,7 +184,7 @@ Rectangle {
                     left: parent.left
                     right: parent.right
                 }
-                height: parent.height / 2
+                height: parent.height / 4
                 source: config.stringValue("background")
                 smooth: true
                 fillMode: Image.PreserveAspectFit

@@ -1,7 +1,11 @@
 { config, pkgs, ... }:
 let
   nixosGreeterTheme = (pkgs.where-is-my-sddm-theme.override {
-    themeConfig.General.background = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
+    themeConfig.General = {
+      background = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
+      passwordInputWidth = "0.25";
+      passwordFontSize = "48";
+    };
   }).overrideAttrs (old: {
     postPatch = (old.postPatch or "") + ''
       cp ${./sddm-theme/Main.qml} where_is_my_sddm_theme/Main.qml
