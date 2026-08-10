@@ -197,29 +197,6 @@ Rectangle {
             }
         }
 
-        Image {
-            id: image
-            anchors {
-                horizontalCenter: parent.horizontalCenter
-                bottom: passwordInput.top
-                bottomMargin: 20
-            }
-            height: parent.height / 8
-            width: parent.width / 4
-            source: config.stringValue("background")
-            smooth: true
-            fillMode: Image.PreserveAspectFit
-            z: 2
-        }
-
-        FastBlur {
-            id: fastBlur
-            z: 3
-            anchors.fill: image
-            source: image
-            radius: config.intValue("blurRadius")
-        }
-
         TextInput {
             id: passwordInput
             width: parent.width*(config.realValue("passwordInputWidth") || 0.5)
@@ -228,11 +205,8 @@ Rectangle {
             font.bold: true
             font.letterSpacing: 20/96*passwordFontSize
             font.family: defaultFont
-            anchors {
-                verticalCenter: parent.verticalCenter
-                verticalCenterOffset: 300
-                horizontalCenter: parent.horizontalCenter
-            }
+            x: (parent.width - width) / 2
+            y: parent.height / 2 + 300
             echoMode: config.boolValue("passwordMask") ? TextInput.Password : null
             color: config.stringValue("passwordTextColor") || textColor
             selectionColor: textColor
@@ -305,16 +279,37 @@ Rectangle {
                 }
             }
         }
+
+        Image {
+            id: image
+            width: parent.width / 4
+            height: parent.height / 8
+            x: (parent.width - width) / 2
+            y: passwordInput.y - height - 20
+            source: config.stringValue("background")
+            smooth: true
+            fillMode: Image.PreserveAspectFit
+            z: 2
+        }
+
+        FastBlur {
+            id: fastBlur
+            z: 3
+            x: image.x
+            y: image.y
+            width: image.width
+            height: image.height
+            source: image
+            radius: config.intValue("blurRadius")
+        }
+
         UsersChoose {
             id: username
             text: currentUsername
             visible: config.boolValue("showUsersByDefault")
             width: mainFrame.width/2.5/48*usersFontSize
-            anchors {
-                horizontalCenter: parent.horizontalCenter
-                bottom: passwordInput.top
-                bottomMargin: 40
-            }
+            x: (parent.width - width) / 2
+            y: passwordInput.y - height - 40
             onPrevClicked: {
                 usersCycleSelectPrev();
             }
