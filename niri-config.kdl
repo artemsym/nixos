@@ -136,6 +136,12 @@ window-rule {
 }
 
 window-rule {
+    match app-id=r#"^firefox$"#
+    geometry-corner-radius 18
+    clip-to-geometry true
+}
+
+window-rule {
     match app-id=r#"^code-oss$"#
     opacity 0.88
     geometry-corner-radius 12
