@@ -1,0 +1,113 @@
+* {
+    font-family: "JetBrainsMono Nerd Font";
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background-color: rgba(13, 17, 23, 0.55);
+    color: #c9d1d9;
+    border-bottom: 1px solid rgba(127, 200, 255, 0.25);
+    transition: background-color 0.3s ease;
+}
+
+/* ===== Workspaces ===== */
+#workspaces {
+    margin: 0 6px;
+}
+
+#workspaces button {
+    padding: 0 6px;
+    color: #6e7b8b;
+    background: transparent;
+    transition: color 0.2s ease;
+}
+
+#workspaces button.active {
+    color: #7fc8ff;
+    text-shadow: 0 0 8px rgba(127, 200, 255, 0.6);
+}
+
+#workspaces button.focused {
+    color: #1f6feb;
+}
+
+/* ===== App launchers ===== */
+#custom-firefox,
+#custom-vscode {
+    padding: 0 10px;
+    font-size: 15px;
+    color: #9fb8d4;
+    transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+#custom-firefox:hover {
+    color: #ff9f4a;
+    text-shadow: 0 0 10px rgba(255, 159, 74, 0.5);
+}
+
+#custom-vscode:hover {
+    color: #4a9eff;
+    text-shadow: 0 0 10px rgba(74, 158, 255, 0.5);
+}
+
+/* ===== Clock ===== */
+#clock {
+    padding: 0 12px;
+    color: #dbe6f2;
+    font-weight: 600;
+}
+
+/* ===== MPRIS / Music with jumping equalizer ===== */
+#custom-mpris {
+    padding: 0 12px;
+    color: #7fc8ff;
+    background: rgba(31, 111, 235, 0.12);
+    border-radius: 6px;
+    margin: 4px 4px;
+}
+
+
+
+/* ===== Right side modules ===== */
+#pulseaudio,
+#network,
+#battery,
+#tray {
+    padding: 0 10px;
+    color: #c9d1d9;
+}
+
+#battery.warning {
+    color: #f0883e;
+}
+
+#tray {
+    margin-right: 6px;
+}
+#custom-media-prev,
+#custom-media-next {
+    padding: 0 8px;
+    color: #9fb8d4;
+    font-size: 14px;
+}
+
+#custom-media-prev:hover,
+#custom-media-next:hover {
+    color: #7fc8ff;
+}
+
+#custom-media-eq {
+    padding: 0 8px;
+    color: #7fc8ff;
+    font-size: 15px;
+    letter-spacing: 1px;
+}
+
+#custom-media-title {
+    padding: 0 10px;
+    color: #dbe6f2;
+    background: rgba(31, 111, 235, 0.12);
+    border-radius: 6px;
+    margin: 4px 0;
+}
