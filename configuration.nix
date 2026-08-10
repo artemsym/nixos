@@ -105,7 +105,7 @@ in
     theme = "where_is_my_sddm_theme";
     wayland.enable = true;
     wayland.compositor = "kwin";
-    extraPackages = [ pkgs.kdePackages.qtsvg ];
+    extraPackages = [ pkgs.qt6.qt5compat pkgs.qt6.qtsvg ];
   };
 
   environment.etc."issue".text = "";
