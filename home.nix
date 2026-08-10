@@ -18,7 +18,13 @@
     enable = true;
     # Plain build, no caelestia-cli: upstream README states the CLI is
     # not required for the Niri port.
-    package = inputs.niri-caelestia-shell.packages.${pkgs.stdenv.hostPlatform.system}.caelestia-shell;
+    package = inputs.niri-caelestia-shell.packages.${pkgs.stdenv.hostPlatform.system}.caelestia-shell.override {
+      # upstream's nix/app2unit.nix pins app2unit 1.0.3 but inherits nixpkgs'
+      # postFixup for the current (1.4.4) version, whose substituteInPlace
+      # pattern doesn't exist in 1.0.3's script -> build fails. Use plain
+      # nixpkgs app2unit instead of the broken pinned override.
+      app2unit = pkgs.app2unit;
+    };
 
     settings = {
       appearance = {
