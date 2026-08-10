@@ -177,20 +177,6 @@ Rectangle {
             visible: true
             anchors.fill: parent
             color: config.stringValue("backgroundFill") || "transparent"
-            Image {
-                id: image
-                anchors {
-                    horizontalCenter: parent.horizontalCenter
-                    bottom: passwordInput.top
-                    bottomMargin: 20
-                }
-                height: parent.height / 8
-                width: parent.width / 4
-                source: config.stringValue("background")
-                smooth: true
-                fillMode: Image.PreserveAspectFit
-                z: 2
-            }
 
             Rectangle {
                 id: backgroundBorder
@@ -209,15 +195,29 @@ Rectangle {
                     }
                 }
             }
+        }
 
-            FastBlur {
-                id: fastBlur
-                z: 3
-                anchors.fill: image
-                source: image
-                radius: config.intValue("blurRadius")
+        Image {
+            id: image
+            anchors {
+                horizontalCenter: parent.horizontalCenter
+                bottom: passwordInput.top
+                bottomMargin: 20
             }
+            height: parent.height / 8
+            width: parent.width / 4
+            source: config.stringValue("background")
+            smooth: true
+            fillMode: Image.PreserveAspectFit
+            z: 2
+        }
 
+        FastBlur {
+            id: fastBlur
+            z: 3
+            anchors.fill: image
+            source: image
+            radius: config.intValue("blurRadius")
         }
 
         TextInput {
