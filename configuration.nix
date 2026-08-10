@@ -89,12 +89,14 @@
   };
   console.useXkbConfig = true;
 
-  # ===== Display Manager: Ly =====
+  # ===== Display Manager: SDDM (astronaut theme) =====
 
-  services.displayManager.ly = {
+  services.displayManager.sddm = {
     enable = true;
-  };  
-  
+    theme = "sddm-astronaut-theme";
+    wayland.enable = true;
+  };
+
   environment.etc."issue".text = "";
 
   # ===== Niri =====
@@ -228,6 +230,7 @@
     elan lean4
 
     # --- GUI ---
+    sddm-astronaut
     vlc virt-manager gimp inkscape
     vscode obs-studio qbittorrent gparted
     dconf-editor blueman osu-lazer-bin
