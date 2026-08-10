@@ -54,7 +54,7 @@
 
       background = {
         desktopClock.enabled = false;
-        enabled = true;
+        enabled = false; # linux-wallpaperengine (systemd service below) draws the actual wallpaper; caelestia's own background layer was covering it
         visualiser = {
           enabled = true;
           autoHide = true;
