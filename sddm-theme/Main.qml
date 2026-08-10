@@ -180,11 +180,12 @@ Rectangle {
             Image {
                 id: image
                 anchors {
-                    top: parent.top
-                    left: parent.left
-                    right: parent.right
+                    horizontalCenter: parent.horizontalCenter
+                    bottom: parent.verticalCenter
+                    bottomMargin: 20
                 }
-                height: parent.height / 4
+                height: parent.height / 8
+                width: parent.width / 4
                 source: config.stringValue("background")
                 smooth: true
                 fillMode: Image.PreserveAspectFit
@@ -229,7 +230,7 @@ Rectangle {
             font.family: defaultFont
             anchors {
                 verticalCenter: parent.verticalCenter
-                verticalCenterOffset: parent.height / 4
+                verticalCenterOffset: parent.height / 8
                 horizontalCenter: parent.horizontalCenter
             }
             echoMode: config.boolValue("passwordMask") ? TextInput.Password : null

@@ -3,8 +3,8 @@ let
   nixosGreeterTheme = (pkgs.where-is-my-sddm-theme.override {
     themeConfig.General = {
       background = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
-      passwordInputWidth = "0.25";
-      passwordFontSize = "48";
+      passwordInputWidth = "0.15";
+      passwordFontSize = "24";
     };
   }).overrideAttrs (old: {
     postPatch = (old.postPatch or "") + ''
