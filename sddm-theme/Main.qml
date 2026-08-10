@@ -282,8 +282,8 @@ Rectangle {
 
         Image {
             id: image
-            width: parent.width / 4 * 1.5
-            height: parent.height / 8 * 1.5
+            width: parent.width / 4 * 1.75
+            height: parent.height / 8 * 1.75
             x: (parent.width - width) / 2
             y: parent.height / 2 - 120 - height
             source: config.stringValue("background")
