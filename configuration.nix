@@ -143,6 +143,7 @@ in
   environment.variables = {
     LIBVA_DRIVER_NAME = "nvidia";
     NVD_BACKEND = "direct";
+    NIXOS_OZONE_WL = "1"; # forces Electron apps (VS Code) onto native Wayland instead of XWayland, fixes window-rule opacity/blur breaking on focus repaint
   };
 
   # ===== Звук =====
