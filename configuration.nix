@@ -112,6 +112,8 @@ in
     extraPackages = [ pkgs.qt6.qt5compat pkgs.qt6.qtsvg ];
   };
 
+  systemd.services.display-manager.environment.QML_DISABLE_DISK_CACHE = "1";
+
   environment.etc."issue".text = "";
 
   # ===== Niri =====
