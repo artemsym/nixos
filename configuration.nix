@@ -113,6 +113,7 @@ in
   };
 
   systemd.services.display-manager.environment.QML_DISABLE_DISK_CACHE = "1";
+  systemd.services.display-manager.serviceConfig.ExecStartPre = "${pkgs.coreutils}/bin/rm -rf /var/lib/sddm/.cache";
 
   environment.etc."issue".text = "";
 
