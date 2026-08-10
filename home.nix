@@ -406,6 +406,18 @@ in
     };
   };
 
+  # ===== Icons =====
+  # Fixes blank/checkerboard icons (blueman tray menu, caelestia's media
+  # widget app icons, etc) — nothing was telling GTK/Qt apps which icon
+  # theme to actually use.
+  gtk = {
+    enable = true;
+    iconTheme = {
+      name = "Papirus-Dark";
+      package = pkgs.papirus-icon-theme;
+    };
+  };
+
   # ===== Git =====
   programs.git = {
     enable = true;

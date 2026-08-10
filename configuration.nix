@@ -95,6 +95,9 @@
     enable = true;
     theme = "sddm-astronaut-theme";
     wayland.enable = true;
+    # the astronaut theme's QML needs QtMultimedia; propagatedBuildInputs on
+    # the theme package alone doesn't put it on SDDM's own Qt plugin path.
+    extraPackages = [ pkgs.kdePackages.qtmultimedia ];
   };
 
   environment.etc."issue".text = "";
@@ -231,6 +234,7 @@
 
     # --- GUI ---
     sddm-astronaut
+    hicolor-icon-theme adwaita-icon-theme
     vlc virt-manager gimp inkscape
     vscode obs-studio qbittorrent gparted
     dconf-editor blueman osu-lazer-bin
