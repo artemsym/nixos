@@ -181,7 +181,7 @@ Rectangle {
                 id: image
                 anchors {
                     horizontalCenter: parent.horizontalCenter
-                    bottom: parent.verticalCenter
+                    bottom: passwordInput.top
                     bottomMargin: 20
                 }
                 height: parent.height / 8
@@ -230,7 +230,6 @@ Rectangle {
             font.family: defaultFont
             anchors {
                 verticalCenter: parent.verticalCenter
-                verticalCenterOffset: parent.height / 8
                 horizontalCenter: parent.horizontalCenter
             }
             echoMode: config.boolValue("passwordMask") ? TextInput.Password : null
