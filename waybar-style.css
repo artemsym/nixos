@@ -11,7 +11,6 @@ window#waybar {
     transition: background-color 0.3s ease;
 }
 
-/* ===== Workspaces ===== */
 #workspaces {
     margin: 0 6px;
 }
@@ -32,7 +31,6 @@ window#waybar {
     color: #1f6feb;
 }
 
-/* ===== App launchers ===== */
 #custom-firefox,
 #custom-vscode {
     padding: 0 10px;
@@ -51,14 +49,12 @@ window#waybar {
     text-shadow: 0 0 10px rgba(74, 158, 255, 0.5);
 }
 
-/* ===== Clock ===== */
 #clock {
     padding: 0 12px;
     color: #dbe6f2;
     font-weight: 600;
 }
 
-/* ===== MPRIS / Music with jumping equalizer ===== */
 #custom-mpris {
     padding: 0 12px;
     color: #7fc8ff;
@@ -67,9 +63,6 @@ window#waybar {
     margin: 4px 4px;
 }
 
-
-
-/* ===== Right side modules ===== */
 #pulseaudio,
 #network,
 #battery,

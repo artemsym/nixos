@@ -7,34 +7,24 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    quickshell = {
-      url = "github:quickshell-mirror/quickshell/v0.3.0";
+    niri-caelestia-shell = {
+      url = "github:jutraim/niri-caelestia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, quickshell, ... }:
-  let
-    system = "x86_64-linux";
-    pkgs = nixpkgs.legacyPackages.${system};
-    clavis-shell = pkgs.callPackage ./clavis-shell.nix {};
-  in {
+  outputs = { self, nixpkgs, home-manager, ... } @ inputs: {
     nixosConfigurations.gothness = nixpkgs.lib.nixosSystem {
-      inherit system;
+      system = "x86_64-linux";
       modules = [
         ./configuration.nix
         home-manager.nixosModules.home-manager
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = { inherit inputs; };
           home-manager.users.gothness = import ./home.nix;
         }
-        ({ pkgs, ... }: {
-          environment.systemPackages = [
-            quickshell.packages.${system}.default
-            clavis-shell
-          ];
-        })
       ];
     };
   };

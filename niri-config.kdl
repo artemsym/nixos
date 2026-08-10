@@ -1,4 +1,4 @@
-input {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+input {
     keyboard {
         xkb {
             layout "us,ru"
@@ -88,7 +88,8 @@ prefer-no-csd
 // AUTOSTART
 // ============================================================
 
-spawn-at-startup "clavis-shell"
+// waybar replaced by caelestia-shell (started via its own
+// home-manager systemd user service, programs.caelestia.enable)
 spawn-at-startup "firefox"
 
 
@@ -136,7 +137,7 @@ window-rule {
 
 window-rule {
     match app-id=r#"^code-oss$"#
-    opacity 0.8
+    opacity 0.88
     geometry-corner-radius 12
     clip-to-geometry true
     background-effect {
@@ -146,7 +147,7 @@ window-rule {
 
 window-rule {
     match app-id=r#"^code$"#
-    opacity 0.8
+    opacity 0.88
     geometry-corner-radius 12
     clip-to-geometry true
     background-effect {
@@ -263,7 +264,7 @@ binds {
 
     Mod+Comma  { consume-window-into-column; }
     Mod+Period { expel-window-from-column; }
-    Mod+R { spawn "wofi" "--show" "drun"; }
+    Mod+R { spawn "nwg-drawer"; }
     Mod+Shift+R { switch-preset-column-width-back; }
     Mod+Ctrl+R { reset-window-height; }
     Mod+F { fullscreen-window; }

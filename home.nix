@@ -1,11 +1,187 @@
-{ config, pkgs, ... }:
+{ config, pkgs, inputs, ... }:
 {
+  imports = [ inputs.niri-caelestia-shell.homeManagerModules.default ];
+
   home.username = "gothness";
   home.homeDirectory = "/home/gothness";
   home.stateVersion = "26.05";
 
   # ===== Niri =====
   xdg.configFile."niri/config.kdl".source = ./niri-config.kdl;
+
+  # ===== Caelestia Shell (niri port) =====
+  # Replaces waybar: https://github.com/jutraim/niri-caelestia-shell
+  # Upstream's own module option is `programs.caelestia` (its README's
+  # `programs.niri-caelestia-shell` example is stale/aspirational and
+  # doesn't match the actual nix/hm-module.nix in the repo).
+  programs.caelestia = {
+    enable = true;
+    # Plain build, no caelestia-cli: upstream README states the CLI is
+    # not required for the Niri port.
+    package = inputs.niri-caelestia-shell.packages.${pkgs.stdenv.hostPlatform.system}.caelestia-shell;
+
+    settings = {
+      appearance = {
+        anim.durations.scale = 1;
+        font = {
+          family = {
+            material = "Material Symbols Rounded";
+            mono = "CaskaydiaCove NF";
+            sans = "Rubik";
+          };
+          size.scale = 1;
+        };
+        padding.scale = 1;
+        rounding.scale = 1;
+        spacing.scale = 1;
+        transparency = {
+          enabled = false;
+          base = 0.85;
+          layers = 0.4;
+        };
+      };
+
+      general.apps = {
+        terminal = [ "foot" ];
+        audio = [ "pavucontrol" ];
+      };
+
+      background = {
+        desktopClock.enabled = false;
+        enabled = true;
+        visualiser = {
+          enabled = true;
+          autoHide = true;
+          rounding = 1;
+          spacing = 1;
+        };
+      };
+
+      bar = {
+        clock.showIcon = false;
+        dragThreshold = 20;
+        entries = [
+          { id = "logo"; enabled = true; }
+          { id = "workspaces"; enabled = true; }
+          { id = "spacer"; enabled = true; }
+          { id = "activeWindow"; enabled = true; }
+          { id = "spacer"; enabled = true; }
+          { id = "tray"; enabled = true; }
+          { id = "clock"; enabled = true; }
+          { id = "statusIcons"; enabled = true; }
+          { id = "power"; enabled = true; }
+          { id = "idleInhibitor"; enabled = false; }
+        ];
+        persistent = false;
+        showOnHover = true;
+        status = {
+          showAudio = false;
+          showBattery = true;
+          showBluetooth = true;
+          showMicrophone = false;
+          showKbLayout = false;
+          showNetwork = true;
+        };
+        tray = {
+          background = true;
+          recolour = true;
+        };
+        workspaces = {
+          activeIndicator = true;
+          activeLabel = "󰮯";
+          activeTrail = false;
+          groupIconsByApp = true;
+          groupingRespectsLayout = true;
+          windowRighClickContext = true;
+          label = "◦";
+          occupiedBg = true;
+          occupiedLabel = "⊙";
+          showWindows = true;
+          shown = 4;
+          windowIconImage = true;
+          focusedWindowBlob = true;
+          windowIconGap = 0;
+          windowIconSize = 30;
+        };
+      };
+
+      border = {
+        rounding = 25;
+        thickness = 10;
+      };
+
+      dashboard = {
+        mediaUpdateInterval = 500;
+        showOnHover = true;
+      };
+
+      launcher = {
+        actionPrefix = ">";
+        dragThreshold = 50;
+        vimKeybinds = false;
+        enableDangerousActions = false;
+        maxShown = 8;
+        maxWallpapers = 9;
+        specialPrefix = "@";
+        useFuzzy = {
+          apps = false;
+          actions = false;
+          schemes = false;
+          variants = false;
+          wallpapers = false;
+        };
+        showOnHover = false;
+      };
+
+      lock.recolourLogo = false;
+
+      notifs = {
+        actionOnClick = false;
+        clearThreshold = 0.3;
+        defaultExpireTimeout = 5000;
+        expandThreshold = 20;
+        expire = false;
+      };
+
+      osd = {
+        enabled = true;
+        enableBrightness = true;
+        enableMicrophone = true;
+        hideDelay = 2000;
+      };
+
+      paths = {
+        mediaGif = "root:/assets/bongocat.gif";
+        sessionGif = "root:/assets/kurukuru.gif";
+        wallpaperDir = "~/Pictures/Wallpapers";
+      };
+
+      services = {
+        audioIncrement = 0.1;
+        defaultPlayer = "Spotify";
+        gpuType = "";
+        playerAliases = [
+          { from = "com.github.th_ch.youtube_music"; to = "YT Music"; }
+        ];
+        weatherLocation = "";
+        useFahrenheit = false;
+        useTwelveHourClock = false;
+        smartScheme = true;
+        visualiserBars = 45;
+      };
+
+      session = {
+        dragThreshold = 30;
+        vimKeybinds = false;
+        commands = {
+          logout = [ "loginctl" "terminate-user" "" ];
+          shutdown = [ "systemctl" "poweroff" ];
+          hibernate = [ "systemctl" "hibernate" ];
+          reboot = [ "systemctl" "reboot" ];
+        };
+      };
+    };
+  };
 
   # ===== Waybar =====
   programs.waybar = {
@@ -200,7 +376,7 @@
     userName = "artemsym";
     userEmail = "artemsym@users.noreply.github.com";
   };
-  
+
   systemd.user.services.polkit-agent = {
     Unit = {
       Description = "Hyprland Polkit Agent";
