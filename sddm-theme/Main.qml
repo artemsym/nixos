@@ -230,7 +230,7 @@ Rectangle {
             font.family: defaultFont
             anchors {
                 verticalCenter: parent.verticalCenter
-                verticalCenterOffset: parent.height / 4
+                verticalCenterOffset: parent.height * 0.4
                 horizontalCenter: parent.horizontalCenter
             }
             echoMode: config.boolValue("passwordMask") ? TextInput.Password : null
