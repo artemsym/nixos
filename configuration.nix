@@ -1,4 +1,13 @@
 { config, pkgs, ... }:
+let
+  nixosGreeterTheme = (pkgs.where-is-my-sddm-theme.override {
+    themeConfig.General.background = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
+  }).overrideAttrs (old: {
+    postPatch = (old.postPatch or "") + ''
+      cp ${./sddm-theme/Main.qml} where_is_my_sddm_theme/Main.qml
+    '';
+  });
+in
 {
   imports = [ ./hardware-configuration.nix ];
   
@@ -89,15 +98,14 @@
   };
   console.useXkbConfig = true;
 
-  # ===== Display Manager: SDDM (astronaut theme) =====
+  # ===== Display Manager: SDDM (custom NixOS greeter theme) =====
 
   services.displayManager.sddm = {
     enable = true;
-    theme = "sddm-astronaut-theme";
+    theme = "where_is_my_sddm_theme";
     wayland.enable = true;
-    # the astronaut theme's QML needs QtMultimedia; propagatedBuildInputs on
-    # the theme package alone doesn't put it on SDDM's own Qt plugin path.
-    extraPackages = [ pkgs.kdePackages.qtmultimedia ];
+    wayland.compositor = "kwin";
+    extraPackages = [ pkgs.kdePackages.qtsvg ];
   };
 
   environment.etc."issue".text = "";
@@ -233,7 +241,7 @@
     elan lean4
 
     # --- GUI ---
-    sddm-astronaut
+    nixosGreeterTheme
     hicolor-icon-theme adwaita-icon-theme
     vlc virt-manager gimp inkscape
     vscode obs-studio qbittorrent gparted
