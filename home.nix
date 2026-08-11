@@ -38,6 +38,16 @@ in
     # by hand does nothing.
     cli.enable = true;
 
+    # The systemd service below runs isolated from the home-manager/session
+    # environment, so it never sees `qt.platformTheme` (set further down) --
+    # same class of bug as SDDM's QML_DISABLE_DISK_CACHE. Without this, the
+    # shell's own Qt/QML icon lookups (media widget, source-app badges) never
+    # resolve against the configured GTK icon theme and render as broken
+    # checkerboard placeholders.
+    systemd.environment = [
+      "QT_QPA_PLATFORMTHEME=gtk3"
+    ];
+
     settings = {
       appearance = {
         anim.durations.scale = 1;
