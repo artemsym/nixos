@@ -50,6 +50,8 @@ in
   # ===== Nix =====
   nix.settings.auto-optimise-store = true;
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  documentation.nix.enable = false;
+  documentation.doc.enable = false;
   nix.gc = {
     automatic = true;
     dates = "weekly";
@@ -269,8 +271,8 @@ in
     pandoc bibata-cursors
 
     # --- Niri / Wayland utils ---
-    matugen material-symbols waybar foot starship
-    grim slurp wofi fftw
+    foot starship
+    grim slurp fftw
 
     # --- Разное ---
     flatpak desktop-file-utils xdg-utils 
