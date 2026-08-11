@@ -252,7 +252,8 @@ in
     nixosGreeterTheme
     hicolor-icon-theme adwaita-icon-theme
     vlc virt-manager gimp inkscape
-    vscode obs-studio qbittorrent gparted
+    (vscode.override { commandLineArgs = "--enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland"; })
+    obs-studio qbittorrent gparted
     dconf-editor blueman osu-lazer-bin
 
     # --- AppImage ---
