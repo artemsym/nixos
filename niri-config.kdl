@@ -139,6 +139,7 @@ window-rule {
     match app-id=r#"^firefox$"#
     geometry-corner-radius 18
     clip-to-geometry true
+    opacity 0.85
 }
 
 window-rule {
