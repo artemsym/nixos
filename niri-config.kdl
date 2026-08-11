@@ -139,12 +139,15 @@ window-rule {
     match app-id=r#"^firefox$"#
     geometry-corner-radius 18
     clip-to-geometry true
+}
+
+window-rule {
+    match app-id=r#"^firefox$"# is-active=false
     opacity 0.85
 }
 
 window-rule {
     match app-id=r#"^code-oss$"#
-    opacity 0.88
     geometry-corner-radius 12
     clip-to-geometry true
     background-effect {
@@ -153,13 +156,22 @@ window-rule {
 }
 
 window-rule {
-    match app-id=r#"^code$"#
+    match app-id=r#"^code-oss$"# is-active=false
     opacity 0.88
+}
+
+window-rule {
+    match app-id=r#"^code$"#
     geometry-corner-radius 12
     clip-to-geometry true
     background-effect {
         blur true
     }
+}
+
+window-rule {
+    match app-id=r#"^code$"# is-active=false
+    opacity 0.88
 }
 
 
