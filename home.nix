@@ -324,6 +324,13 @@ in
     };
   };
 
+  # Qt apps (caelestia-shell is Qt6/QML) don't read GTK icon-theme settings
+  # on their own -- this tells Qt to bridge through GTK's theme/icon config.
+  qt = {
+    enable = true;
+    platformTheme.name = "gtk3";
+  };
+
   # ===== Git =====
   programs.git = {
     enable = true;
