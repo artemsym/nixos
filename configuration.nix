@@ -50,7 +50,7 @@ in
   # ===== Nix =====
   nix.settings.auto-optimise-store = true;
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  documentation.nix.enable = false;
+  documentation.nixos.enable = false;
   documentation.doc.enable = false;
   nix.gc = {
     automatic = true;
