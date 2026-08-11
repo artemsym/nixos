@@ -248,7 +248,7 @@ in
       PartOf = [ "graphical-session.target" ];
     };
     Service = {
-      ExecStart = "${pkgs.linux-wallpaperengine}/bin/linux-wallpaperengine --screen-root HDMI-A-1 --screen-root DP-1 2876210462";
+      ExecStart = "${pkgs.linux-wallpaperengine}/bin/linux-wallpaperengine --fps 30 --screen-root HDMI-A-1 --screen-root DP-1 2876210462";
       Restart = "on-failure";
       RestartSec = "3s";
     };
