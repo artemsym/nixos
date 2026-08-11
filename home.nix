@@ -181,7 +181,7 @@ in
         playerAliases = [
           { from = "com.github.th_ch.youtube_music"; to = "YT Music"; }
         ];
-        weatherLocation = "";
+        weatherLocation = "Saint-Petersburg";
         useFahrenheit = false;
         useTwelveHourClock = false;
         smartScheme = true;
