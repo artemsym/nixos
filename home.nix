@@ -10,10 +10,12 @@ let
     # service below to be able to call the shell's lock IPC.
     withCli = true;
   }).overrideAttrs (old: {
-    # Swap the decorative bongocat gif in the dashboard media widget for a
-    # Cava-driven bar equalizer, matching the theme instead of a random cat.
+    # Swap the decorative bongocat gif in the dashboard media widget for
+    # a different one (still the stock AnimatedImage/bongocat wiring in
+    # Media.qml -- just a different assets/bongocat.gif underneath it).
     postPatch = (old.postPatch or "") + ''
       cp ${./caelestia-patches/Media.qml} modules/dashboard/Media.qml
+      cp ${./caelestia-patches/bongocat.gif} assets/bongocat.gif
     '';
   });
 in
