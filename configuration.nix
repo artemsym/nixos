@@ -11,22 +11,6 @@ let
       cp ${./sddm-theme/Main.qml} where_is_my_sddm_theme/Main.qml
     '';
   });
-
-  # Sets a live gain (dB) on one band of the caelestia-eq PipeWire sink
-  # (see services.pipewire.extraConfig below). Looks the sink's node id up
-  # by name each call since it isn't stable across restarts.
-  caelestiaEqSet = pkgs.writeShellScriptBin "caelestia-eq-set" ''
-    set -euo pipefail
-    band=$1
-    gain=$2
-    id=$(${pkgs.pipewire}/bin/pw-dump | ${pkgs.jq}/bin/jq -r '
-      .[] | select(.info.props."node.name" == "effect_input.caelestia_eq") | .id
-    ' | head -n1)
-    if [ -z "$id" ]; then
-      exit 0
-    fi
-    ${pkgs.pipewire}/bin/pw-cli s "$id" Props "{ params = [ \"$band:Gain\" $gain ] }" >/dev/null
-  '';
 in
 {
   imports = [ ./hardware-configuration.nix ];
@@ -198,71 +182,6 @@ in
     pulse.enable = true;
     jack.enable = true;
     wireplumber.enable = true;
-
-    # 3-band (bass/mid/treble) EQ sink, controlled live from the caelestia
-    # media widget. Structure copied from PipeWire's own upstream example
-    # (src/daemon/filter-chain/sink-eq6.conf), trimmed to 3 bands. Creates
-    # a new "Caelestia EQ Sink" output device -- select it once as your
-    # default output (e.g. in pavucontrol) for it to actually apply.
-    extraConfig.pipewire."92-caelestia-eq" = {
-      "context.modules" = [
-        {
-          name = "libpipewire-module-filter-chain";
-          args = {
-            "node.description" = "Caelestia EQ Sink";
-            "media.name" = "Caelestia EQ Sink";
-            "filter.graph" = {
-              nodes = [
-                {
-                  type = "builtin";
-                  name = "eq_bass";
-                  label = "bq_lowshelf";
-                  control = {
-                    Freq = 100.0;
-                    Q = 1.0;
-                    Gain = 0.0;
-                  };
-                }
-                {
-                  type = "builtin";
-                  name = "eq_mid";
-                  label = "bq_peaking";
-                  control = {
-                    Freq = 1000.0;
-                    Q = 1.0;
-                    Gain = 0.0;
-                  };
-                }
-                {
-                  type = "builtin";
-                  name = "eq_treble";
-                  label = "bq_highshelf";
-                  control = {
-                    Freq = 8000.0;
-                    Q = 1.0;
-                    Gain = 0.0;
-                  };
-                }
-              ];
-              links = [
-                { output = "eq_bass:Out"; input = "eq_mid:In"; }
-                { output = "eq_mid:Out"; input = "eq_treble:In"; }
-              ];
-            };
-            "audio.channels" = 2;
-            "audio.position" = [ "FL" "FR" ];
-            "capture.props" = {
-              "node.name" = "effect_input.caelestia_eq";
-              "media.class" = "Audio/Sink";
-            };
-            "playback.props" = {
-              "node.name" = "effect_output.caelestia_eq";
-              "node.passive" = true;
-            };
-          };
-        }
-      ];
-    };
   };
 
   # ===== Bluetooth =====
@@ -357,7 +276,6 @@ in
 
     # --- GUI ---
     nixosGreeterTheme
-    caelestiaEqSet
     hicolor-icon-theme adwaita-icon-theme
     vlc virt-manager gimp inkscape
     (vscode.override { commandLineArgs = "--enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland"; })
