@@ -56,6 +56,7 @@ in
     systemd.environment = [
       "QT_QPA_PLATFORMTHEME=gtk3"
       "QS_ICON_THEME=Papirus-Dark"
+      "QML_DISABLE_DISK_CACHE=1"
     ];
 
     settings = {
