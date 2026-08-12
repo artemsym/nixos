@@ -1,6 +1,6 @@
 { config, pkgs, inputs, ... }:
 let
-  caelestiaShellPkg = inputs.niri-caelestia-shell.packages.${pkgs.stdenv.hostPlatform.system}.caelestia-shell.override {
+  caelestiaShellPkg = (inputs.niri-caelestia-shell.packages.${pkgs.stdenv.hostPlatform.system}.caelestia-shell.override {
     # upstream's nix/app2unit.nix pins app2unit 1.0.3 but inherits nixpkgs'
     # postFixup for the current (1.4.4) version, whose substituteInPlace
     # pattern doesn't exist in 1.0.3's script -> build fails. Use plain
@@ -9,7 +9,13 @@ let
     # Needed for colour theming (caelestia-cli) and for the idle-lock
     # service below to be able to call the shell's lock IPC.
     withCli = true;
-  };
+  }).overrideAttrs (old: {
+    # Swap the decorative bongocat gif in the dashboard media widget for a
+    # Cava-driven bar equalizer, matching the theme instead of a random cat.
+    postPatch = (old.postPatch or "") + ''
+      cp ${./caelestia-patches/Media.qml} modules/dashboard/Media.qml
+    '';
+  });
 in
 {
   imports = [ inputs.niri-caelestia-shell.homeManagerModules.default ];
@@ -39,13 +45,16 @@ in
     cli.enable = true;
 
     # The systemd service below runs isolated from the home-manager/session
-    # environment, so it never sees `qt.platformTheme` (set further down) --
-    # same class of bug as SDDM's QML_DISABLE_DISK_CACHE. Without this, the
-    # shell's own Qt/QML icon lookups (media widget, source-app badges) never
-    # resolve against the configured GTK icon theme and render as broken
-    # checkerboard placeholders.
+    # environment (same class of bug as SDDM's QML_DISABLE_DISK_CACHE), so
+    # neither var below ever reaches it on its own. QT_QPA_PLATFORMTHEME
+    # bridges genuinely-Qt icon lookups to GTK's theme; but Quickshell (what
+    # caelestia is actually built on) resolves ITS OWN icons independently of
+    # Qt's platform theme entirely -- it defaults to the bare "hicolor" theme
+    # unless QS_ICON_THEME names a real theme, which is what was actually
+    # causing the media widget's broken/checkerboard app icons.
     systemd.environment = [
       "QT_QPA_PLATFORMTHEME=gtk3"
+      "QS_ICON_THEME=Papirus-Dark"
     ];
 
     settings = {
