@@ -515,87 +515,17 @@ Item {
         implicitWidth: visualiser.width
         implicitHeight: visualiser.height
 
-        RowLayout {
+        AnimatedImage {
             anchors.centerIn: parent
-            spacing: Appearance.spacing.normal
 
-            EqSlider {
-                band: "eq_bass"
-                label: qsTr("Bass")
-            }
+            width: visualiser.width * 0.75
+            height: visualiser.height * 0.75
 
-            EqSlider {
-                band: "eq_mid"
-                label: qsTr("Mid")
-            }
-
-            EqSlider {
-                band: "eq_treble"
-                label: qsTr("Treble")
-            }
-        }
-    }
-
-    component EqSlider: ColumnLayout {
-        id: eqSlider
-
-        required property string band
-        required property string label
-        // 0..1, mapped to -12..+12 dB; 0.5 = flat/0dB
-        property real value: 0.5
-
-        spacing: Appearance.spacing.small / 2
-
-        onValueChanged: applyTimer.restart()
-
-        Timer {
-            id: applyTimer
-            interval: 80
-            onTriggered: Quickshell.execDetached(["caelestia-eq-set", eqSlider.band, ((eqSlider.value - 0.5) * 24).toFixed(1)])
-        }
-
-        Item {
-            id: track
-
-            Layout.alignment: Qt.AlignHCenter
-            implicitWidth: 8
-            implicitHeight: visualiser.height * 0.6
-
-            Rectangle {
-                anchors.fill: parent
-                radius: Appearance.rounding.scale === 0 ? 0 : width / 2
-                color: Colours.tPalette.m3surfaceContainer
-            }
-
-            Rectangle {
-                anchors.bottom: parent.bottom
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: parent.width
-                height: parent.height * eqSlider.value
-                radius: Appearance.rounding.scale === 0 ? 0 : width / 2
-                color: Colours.palette.m3primary
-            }
-
-            MouseArea {
-                anchors.fill: parent
-
-                function setFromY(y: real): void {
-                    eqSlider.value = Math.max(0, Math.min(1, 1 - y / track.height));
-                }
-
-                onPressed: mouse => setFromY(mouse.y)
-                onPositionChanged: mouse => {
-                    if (pressed)
-                        setFromY(mouse.y);
-                }
-            }
-        }
-
-        StyledText {
-            Layout.alignment: Qt.AlignHCenter
-            text: eqSlider.label
-            color: Colours.palette.m3outline
-            font.pointSize: Appearance.font.size.smaller
+            playing: Players.active?.isPlaying ?? false
+            speed: BeatTracker.bpm / 300
+            source: Paths.absolutePath(Config.paths.mediaGif)
+            asynchronous: true
+            fillMode: AnimatedImage.PreserveAspectFit
         }
     }
 
