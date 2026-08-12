@@ -389,13 +389,9 @@ Item {
                     anchors.centerIn: parent
                     spacing: Appearance.spacing.small
 
-                    PlayerIcon {
-                        player: Players.active
-                    }
-
                     StyledText {
                         Layout.fillWidth: true
-                        Layout.maximumWidth: playerSelector.implicitWidth - implicitHeight - parent.spacing - Appearance.padding.normal * 2
+                        Layout.maximumWidth: playerSelector.implicitWidth - Appearance.padding.normal * 2
                         text: Players.active ? Players.getIdentity(Players.active) : qsTr("No players")
                         color: Players.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant
                         elide: Text.ElideRight
@@ -463,10 +459,6 @@ Item {
                                     anchors.centerIn: parent
                                     spacing: Appearance.spacing.small
 
-                                    PlayerIcon {
-                                        player: player.modelData
-                                    }
-
                                     StyledText {
                                         text: Players.getIdentity(player.modelData)
                                         color: Colours.palette.m3onSecondaryContainer
@@ -525,54 +517,85 @@ Item {
 
         RowLayout {
             anchors.centerIn: parent
-            spacing: Appearance.spacing.small / 2
+            spacing: Appearance.spacing.normal
 
-            Repeater {
-                model: 16
+            EqSlider {
+                band: "eq_bass"
+                label: qsTr("Bass")
+            }
 
-                Rectangle {
-                    required property int modelData
-                    readonly property real value: Math.max(1e-3, Math.min(1, Cava.values[Math.floor(modelData * Config.services.visualiserBars / 16)]))
+            EqSlider {
+                band: "eq_mid"
+                label: qsTr("Mid")
+            }
 
-                    Layout.alignment: Qt.AlignVCenter
-                    implicitWidth: 4
-                    implicitHeight: Math.max(4, value * (visualiser.height * 0.75))
-                    radius: Appearance.rounding.scale === 0 ? 0 : width / 2
-                    color: Colours.palette.m3primary
-
-                    Behavior on implicitHeight {
-                        Anim {}
-                    }
-                }
+            EqSlider {
+                band: "eq_treble"
+                label: qsTr("Treble")
             }
         }
     }
 
-    component PlayerIcon: Loader {
-        id: loader
+    component EqSlider: ColumnLayout {
+        id: eqSlider
 
-        required property MprisPlayer player
-        readonly property string icon: Icons.getAppIcon(player?.identity)
+        required property string band
+        required property string label
+        // 0..1, mapped to -12..+12 dB; 0.5 = flat/0dB
+        property real value: 0.5
 
-        Layout.fillHeight: true
-        asynchronous: true
-        sourceComponent: !player || icon === "image://icon/" ? fallbackIcon : playerImage
+        spacing: Appearance.spacing.small / 2
 
-        Component {
-            id: playerImage
+        onValueChanged: applyTimer.restart()
 
-            IconImage {
-                implicitWidth: height
-                source: loader.icon
+        Timer {
+            id: applyTimer
+            interval: 80
+            onTriggered: Quickshell.execDetached(["caelestia-eq-set", eqSlider.band, ((eqSlider.value - 0.5) * 24).toFixed(1)])
+        }
+
+        Item {
+            id: track
+
+            Layout.alignment: Qt.AlignHCenter
+            implicitWidth: 8
+            implicitHeight: visualiser.height * 0.6
+
+            Rectangle {
+                anchors.fill: parent
+                radius: Appearance.rounding.scale === 0 ? 0 : width / 2
+                color: Colours.tPalette.m3surfaceContainer
+            }
+
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width
+                height: parent.height * eqSlider.value
+                radius: Appearance.rounding.scale === 0 ? 0 : width / 2
+                color: Colours.palette.m3primary
+            }
+
+            MouseArea {
+                anchors.fill: parent
+
+                function setFromY(y: real): void {
+                    eqSlider.value = Math.max(0, Math.min(1, 1 - y / track.height));
+                }
+
+                onPressed: mouse => setFromY(mouse.y)
+                onPositionChanged: mouse => {
+                    if (pressed)
+                        setFromY(mouse.y);
+                }
             }
         }
 
-        Component {
-            id: fallbackIcon
-
-            MaterialIcon {
-                text: loader.player ? "animated_images" : "music_off"
-            }
+        StyledText {
+            Layout.alignment: Qt.AlignHCenter
+            text: eqSlider.label
+            color: Colours.palette.m3outline
+            font.pointSize: Appearance.font.size.smaller
         }
     }
 

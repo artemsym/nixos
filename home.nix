@@ -47,11 +47,10 @@ in
     # The systemd service below runs isolated from the home-manager/session
     # environment (same class of bug as SDDM's QML_DISABLE_DISK_CACHE), so
     # neither var below ever reaches it on its own. QT_QPA_PLATFORMTHEME
-    # bridges genuinely-Qt icon lookups to GTK's theme; but Quickshell (what
-    # caelestia is actually built on) resolves ITS OWN icons independently of
-    # Qt's platform theme entirely -- it defaults to the bare "hicolor" theme
-    # unless QS_ICON_THEME names a real theme, which is what was actually
-    # causing the media widget's broken/checkerboard app icons.
+    # bridges genuinely-Qt icon lookups to GTK's theme; QS_ICON_THEME sets
+    # Quickshell's own (separate) icon theme -- it defaults to the bare
+    # "hicolor" theme otherwise, which is why tray/workspace icons were
+    # showing blank without this.
     systemd.environment = [
       "QT_QPA_PLATFORMTHEME=gtk3"
       "QS_ICON_THEME=Papirus-Dark"
