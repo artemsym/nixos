@@ -14,7 +14,12 @@ let
 in
 {
   imports = [ ./hardware-configuration.nix ];
-  
+
+  # ===== Ядро =====
+  # Zen: low-latency планировщик заточенный под десктоп/игры (в духе того,
+  # что использует CachyOS), уже в основном nixpkgs — без сторонних кэшей.
+  boot.kernelPackages = pkgs.linuxPackages_zen;
+
   # ===== Загрузчик =====
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.configurationLimit = 10;
