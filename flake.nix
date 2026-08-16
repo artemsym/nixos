@@ -11,6 +11,10 @@
       url = "github:jutraim/niri-caelestia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    fetch = {
+      url = "github:areofyl/fetch";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, home-manager, ... } @ inputs: {

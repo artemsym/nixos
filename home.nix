@@ -20,11 +20,24 @@ let
   });
 in
 {
-  imports = [ inputs.niri-caelestia-shell.homeManagerModules.default ];
+  imports = [
+    inputs.niri-caelestia-shell.homeManagerModules.default
+    inputs.fetch.homeManagerModules.default
+  ];
 
   home.username = "gothness";
   home.homeDirectory = "/home/gothness";
   home.stateVersion = "26.05";
+
+  # ===== fetch (3D spinning distro logo, https://github.com/areofyl/fetch) =====
+  # foot supports the Symbols for Legacy Computing block needed for the
+  # nicer "sextants" shading mode (there's no typed option for shading_mode
+  # in the hm module, only raw config passthrough via extraConfig).
+  programs.fetch = {
+    enable = true;
+    spin = "y";
+    extraConfig = "shading_mode=sextants";
+  };
 
   # ===== Niri =====
   xdg.configFile."niri/config.kdl".source = ./niri-config.kdl;
