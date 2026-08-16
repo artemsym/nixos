@@ -90,6 +90,11 @@ prefer-no-csd
 // home-manager systemd user service, programs.caelestia.enable)
 spawn-at-startup "firefox"
 
+// Fullscreen 3D fetch splash on session start (areofyl/fetch). Custom
+// app-id so the window-rule below can target just this one foot window
+// without affecting normal terminals spawned via Mod+T/Mod+Return.
+spawn-at-startup "foot" "--app-id=fetch-splash" "-e" "fetch" "-l" "NixOS"
+
 
 // ============================================================
 // CURSOR
@@ -132,6 +137,11 @@ animations {
 window-rule {
     match app-id=r#"firefox$"# title="^Picture-in-Picture$"
     open-floating true
+}
+
+window-rule {
+    match app-id=r#"^fetch-splash$"#
+    open-fullscreen true
 }
 
 window-rule {
