@@ -36,6 +36,7 @@ in
   programs.fetch = {
     enable = true;
     spin = "y";
+    size = 2.2;
     extraConfig = "shading_mode=sextants";
   };
 
