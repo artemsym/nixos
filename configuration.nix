@@ -289,7 +289,7 @@ in
     telegram-desktop playerctl mpv ffmpeg yt-dlp imagemagick
 
     # --- Чтение ---
-    zotero calibre onlyoffice-desktopeditors zathura
+    jmtpfs zotero calibre onlyoffice-desktopeditors zathura
 
     # --- Текст ---
     pandoc bibata-cursors
