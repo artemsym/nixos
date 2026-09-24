@@ -11,13 +11,109 @@ let
       cp ${./sddm-theme/Main.qml} where_is_my_sddm_theme/Main.qml
     '';
   });
+
+  # Окружение Python со всеми библиотеками для парсинга и генерации epub
+  bilingualPythonEnv = pkgs.python3.withPackages (ps: with ps; [
+    requests
+    beautifulsoup4
+    tqdm
+    ebooklib
+    openai
+    tiktoken
+    rich
+    tenacity
+    lxml
+    anthropic
+    google-generativeai
+  ]);
+  # Исполняемый файл переводчика bilingual_book_maker
+  bilingualBookMaker = pkgs.writeShellScriptBin "bilingual_book_maker" ''
+    set -euo pipefail
+    APP_DIR="$HOME/.local/share/bilingual_book_maker"
+    if [ ! -d "$APP_DIR" ]; then
+      echo "Инициализация bilingual_book_maker в $APP_DIR..."
+      mkdir -p "$HOME/.local/share"
+      ${pkgs.git}/bin/git clone --depth=1 https://github.com/yihong0618/bilingual_book_maker.git "$APP_DIR"
+    fi
+    exec ${bilingualPythonEnv}/bin/python "$APP_DIR/make_book.py" "$@"
+  '';
+
+  # Локальный конвертер PDF в чистый EPUB для читалки
+  pdf2epub = pkgs.writeShellScriptBin "pdf2epub" ''
+    set -euo pipefail
+    if [ "$#" -lt 1 ]; then
+      echo "Использование: pdf2epub <книга.pdf> [результат.epub]"
+      exit 1
+    fi
+    IN="$1"
+    if [ ! -f "$IN" ] && [ -f "$HOME/Загрузки/$IN" ]; then
+      IN="$HOME/Загрузки/$IN"
+    fi
+    OUT="''${2:-''${IN%.*}.epub}"
+    echo "Конвертация $IN в $OUT..."
+    ${pkgs.calibre}/bin/ebook-convert "$IN" "$OUT" \
+      --enable-heuristics \
+      --smarten-punctuation
+    echo "Готово: $OUT"
+  '';
+  # Автоматический конвейер: PDF/EPUB -> перевод -> билингвальный EPUB
+  translateBook = pkgs.writeShellScriptBin "translate-book" ''
+    set -euo pipefail
+    if [ "$#" -lt 1 ]; then
+      echo "Использование: translate-book <файл.pdf|файл.epub> [движок: google|deepl|ollama] [deepl_key]"
+      exit 1
+    fi
+    IN="$1"
+    ENGINE="''${2:-google}"
+    DEEPL_KEY="''${3:-''${DEEPL_KEY:-}}"
+
+    if [ ! -f "$IN" ] && [ -f "$HOME/Загрузки/$IN" ]; then
+      IN="$HOME/Загрузки/$IN"
+    fi
+
+    BASE="''${IN%.*}"
+    EPUB="$IN"
+
+    if [[ "$IN" == *.pdf ]]; then
+      EPUB="''${BASE}.epub"
+      if [ ! -f "$EPUB" ]; then
+        echo "Конвертация PDF в EPUB..."
+        ${pkgs.calibre}/bin/ebook-convert "$IN" "$EPUB" --enable-heuristics --smarten-punctuation
+      fi
+    fi
+
+    echo "Генерация билингвального издания через $ENGINE..."
+    if [ "$ENGINE" = "ollama" ]; then
+      ${bilingualBookMaker}/bin/bilingual_book_maker \
+        --book_name "$EPUB" \
+        --model_type openai \
+        --api_base http://localhost:11434/v1 \
+        --openai_model qwen2.5:7b \
+        --language "ru"
+    elif [ "$ENGINE" = "deepl" ]; then
+      if [ -z "$DEEPL_KEY" ]; then
+        echo "Ошибка: для DeepL нужно передать API-ключ!"
+        echo "Пример: translate-book '$EPUB' deepl 'твой-ключ-от-deepl'"
+        exit 1
+      fi
+      ${bilingualBookMaker}/bin/bilingual_book_maker \
+        --book_name "$EPUB" \
+        --model_type deepl \
+        --deepl_key "$DEEPL_KEY" \
+        --language "ru"
+    else
+      ${bilingualBookMaker}/bin/bilingual_book_maker \
+        --book_name "$EPUB" \
+        --model_type "$ENGINE" \
+        --language "ru"
+    fi
+    echo "Готово! Создан файл: ''${BASE}_bilingual.epub"
+  '';
 in
 {
   imports = [ ./hardware-configuration.nix ];
 
   # ===== Ядро =====
-  # Zen: low-latency планировщик заточенный под десктоп/игры (в духе того,
-  # что использует CachyOS), уже в основном nixpkgs — без сторонних кэшей.
   boot.kernelPackages = pkgs.linuxPackages_zen;
 
   # ===== Загрузчик =====
@@ -38,6 +134,7 @@ in
     "usbcore.quirks=0bda:a729:k"
   ];
   boot.blacklistedKernelModules = [ "nouveau" ];
+
   # ===== Сеть =====
   networking.hostName = "gothness";
   networking.networkmanager.enable = true;
@@ -115,9 +212,7 @@ in
   };
   console.useXkbConfig = true;
 
-  # Apple keyboard (vendor 05ac, product 024f): F1-F12 send their fn-media
-  # actions (brightness/dashboard/kbd-illum/media/volume) by default. Force
-  # the F-row to always send plain F1-F12 instead.
+  # Apple keyboard hwdb
   services.udev.extraHwdb = ''
     evdev:input:b*v05ACp024F*
      KEYBOARD_KEY_7003a=f1
@@ -134,8 +229,7 @@ in
      KEYBOARD_KEY_70045=f12
   '';
 
-  # ===== Display Manager: SDDM (custom NixOS greeter theme) =====
-
+  # ===== Display Manager: SDDM =====
   services.displayManager.sddm = {
     enable = true;
     theme = "where_is_my_sddm_theme";
@@ -150,11 +244,17 @@ in
   environment.etc."issue".text = "";
 
   # ===== Niri =====
-
   programs.niri.enable = true;
-
   environment.etc."wayland-sessions".source =
     "${config.services.displayManager.sessionData.desktops}/share/wayland-sessions";
+
+  # ===== Файловый менеджер и накопители (Nemo / GVfs / UDisks2) =====
+  services.gvfs.enable = true;        # Корзина, Kobo (USB/MTP), внешние диски и сетевые папки
+  services.udisks2.enable = true;     # Монтирование накопителей без sudo
+  security.polkit.enable = true;      # Права доступа к накопителям
+  services.tumbler.enable = true;     # D-Bus генератор эскизов (картинки, видео, PDF)
+  programs.dconf.enable = true;       # База настроек для Nemo, анимаций GTK и закреплений
+
   # ===== NVIDIA =====
   hardware.graphics = {
     enable = true;
@@ -175,7 +275,7 @@ in
   environment.variables = {
     LIBVA_DRIVER_NAME = "nvidia";
     NVD_BACKEND = "direct";
-    NIXOS_OZONE_WL = "1"; # forces Electron apps (VS Code) onto native Wayland instead of XWayland, fixes window-rule opacity/blur breaking on focus repaint
+    NIXOS_OZONE_WL = "1";
   };
 
   # ===== Звук =====
@@ -213,7 +313,7 @@ in
   programs.gamemode.enable = true;
   hardware.steam-hardware.enable = true;
 
-  # ===== CPU =====
+  # ===== CPU / Системные демоны =====
   powerManagement.cpuFreqGovernor = "schedutil";
   services.thermald.enable = true;
 
@@ -224,10 +324,11 @@ in
     freeSwapThreshold = 10;
   };
 
-  # ===== SSD =====
+  # ===== SSD & Виртуализация =====
   services.fstrim.enable = true;
   systemd.services.NetworkManager-wait-online.enable = false;
   virtualisation.libvirtd.enable = true;
+
   # ===== Пользователь =====
   users.users.gothness = {
     isNormalUser = true;
@@ -244,7 +345,7 @@ in
   programs.firefox.enable = true;
   nixpkgs.config.allowUnfree = true;
 
-  # ===== Flatpak =====
+  # ===== Порталы =====
   xdg.portal = {
     enable = true;
     extraPortals = with pkgs; [
@@ -269,42 +370,53 @@ in
 
   # ===== Пакеты =====
   environment.systemPackages = with pkgs; [
-    # --- CLI ---
+    # --- Файловый менеджер (Nemo) и компоненты ---
+    nemo-with-extensions
+    file-roller           # Распаковка/сжатие через ПКМ ("Извлечь сюда", "Создать архив")
+    webp-pixbuf-loader    # Эскизы изображений WebP
+    libgsf                # Эскизы офисных документов ODF
+    poppler               # Эскизы и работа с PDF
+    ffmpegthumbnailer     # Эскизы видеофайлов
+
+    # --- CLI утилиты ---
     git wget curl htop btop tree file unzip zip p7zip unrar
     ripgrep fd fzf fastfetch tmux rsync jq ncdu bat eza tldr lsof psmisc
     pciutils usbutils lm_sensors nmap mtr whois dnsutils gnupg sshfs
-    zoxide direnv duf xclip wl-clipboard mpvpaper yazi ffmpegthumbnailer
-    cava unar poppler xwayland-satellite satty hyprpolkitagent linux-wallpaperengine
+    zoxide direnv duf xclip wl-clipboard mpvpaper
+    cava unar xwayland-satellite satty hyprpolkitagent linux-wallpaperengine
 
     # --- Разработка ---
     claude-code python3
     elan lean4
 
-    # --- GUI ---
-    nixosGreeterTheme
+    # --- GUI программы ---
+    nixosGreeterTheme hmcl
     hicolor-icon-theme adwaita-icon-theme
     vlc virt-manager gimp inkscape
     (vscode.override { commandLineArgs = "--enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland"; })
     obs-studio qbittorrent gparted
-    dconf-editor blueman osu-lazer-bin
+    dconf-editor blueman jdk17 
 
-    # --- AppImage ---
-    appimage-run steam-run libepoxy
+    # --- AppImage & Wine ---
+    appimage-run wine steam-run libepoxy
 
     # --- Медиа ---
     telegram-desktop playerctl mpv ffmpeg yt-dlp imagemagick
 
-    # --- Чтение ---
+    # --- Чтение, верстка и перевод ---
     jmtpfs zotero calibre onlyoffice-desktopeditors zathura
+    pdf2epub              # Локальная конвертация PDF -> EPUB с очисткой верстки
+    translateBook         # Автоматический пайплайн двуязычного перевода
+    bilingualBookMaker    # CLI утилита параллельного перевода
 
     # --- Текст ---
-    pandoc bibata-cursors
+    pandoc bibata-cursors rnote
 
     # --- Niri / Wayland utils ---
     foot starship
     grim slurp fftw
 
-    # --- Разное ---
+    # --- Интеграция ---
     flatpak desktop-file-utils xdg-utils 
   ];
 
