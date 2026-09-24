@@ -26,14 +26,19 @@ let
     anthropic
     google-generativeai
   ]);
-  # Исполняемый файл переводчика bilingual_book_maker
+  # Исполняемый файл переводчика bilingual_book_maker. Апстрим недавно
+  # переехал на новый CLI (--model_type/--openai_model/--deepl_key больше
+  # не существуют, теперь --model/--api_format/--key) -- держим клон
+  # свежим через git pull, чтобы не залипнуть на несовместимой версии.
   bilingualBookMaker = pkgs.writeShellScriptBin "bilingual_book_maker" ''
     set -euo pipefail
     APP_DIR="$HOME/.local/share/bilingual_book_maker"
     if [ ! -d "$APP_DIR" ]; then
       echo "Инициализация bilingual_book_maker в $APP_DIR..."
       mkdir -p "$HOME/.local/share"
-      ${pkgs.git}/bin/git clone --depth=1 https://github.com/yihong0618/bilingual_book_maker.git "$APP_DIR"
+      ${pkgs.git}/bin/git clone https://github.com/yihong0618/bilingual_book_maker.git "$APP_DIR"
+    else
+      ${pkgs.git}/bin/git -C "$APP_DIR" pull --ff-only --quiet || true
     fi
     exec ${bilingualPythonEnv}/bin/python "$APP_DIR/make_book.py" "$@"
   '';
@@ -56,16 +61,27 @@ let
       --smarten-punctuation
     echo "Готово: $OUT"
   '';
-  # Автоматический конвейер: PDF/EPUB -> перевод -> билингвальный EPUB
+  # Автоматический конвейер: PDF/EPUB -> перевод -> билингвальный EPUB.
+  # Использует актуальный CLI bilingual_book_maker: --model/--api_format/
+  # --key вместо снятых --model_type/--openai_model/--deepl_key, плюс
+  # --parallel-workers и --accumulated_num для реальной скорости (без них
+  # каждый параграф шёл отдельным последовательным запросом -- отсюда и
+  # 2 часа на 5 книг).
   translateBook = pkgs.writeShellScriptBin "translate-book" ''
     set -euo pipefail
     if [ "$#" -lt 1 ]; then
-      echo "Использование: translate-book <файл.pdf|файл.epub> [движок: google|deepl|ollama] [deepl_key]"
+      echo "Использование: translate-book <файл.pdf|файл.epub> [движок: ollama|openai|anthropic|deepl|deeplfree] [модель] [ключ]"
+      echo "  ollama     -- локально, бесплатно, без ключа (нужен запущенный ollama + модель)"
+      echo "  openai     -- translate-book книга.epub openai gpt-4o-mini sk-..."
+      echo "  anthropic  -- translate-book книга.epub anthropic claude-haiku-4-5-20251001 sk-ant-..."
+      echo "  deepl      -- translate-book книга.epub deepl '' твой-ключ-от-deepl"
+      echo "  deeplfree  -- бесплатный DeepL без ключа (менее надёжный лимитами)"
       exit 1
     fi
     IN="$1"
-    ENGINE="''${2:-google}"
-    DEEPL_KEY="''${3:-''${DEEPL_KEY:-}}"
+    ENGINE="''${2:-ollama}"
+    MODEL="''${3:-}"
+    KEY="''${4:-''${BBM_API_KEY:-}}"
 
     if [ ! -f "$IN" ] && [ -f "$HOME/Загрузки/$IN" ]; then
       IN="$HOME/Загрузки/$IN"
@@ -82,32 +98,49 @@ let
       fi
     fi
 
-    echo "Генерация билингвального издания через $ENGINE..."
-    if [ "$ENGINE" = "ollama" ]; then
-      ${bilingualBookMaker}/bin/bilingual_book_maker \
-        --book_name "$EPUB" \
-        --model_type openai \
-        --api_base http://localhost:11434/v1 \
-        --openai_model qwen2.5:7b \
-        --language "ru"
-    elif [ "$ENGINE" = "deepl" ]; then
-      if [ -z "$DEEPL_KEY" ]; then
-        echo "Ошибка: для DeepL нужно передать API-ключ!"
-        echo "Пример: translate-book '$EPUB' deepl 'твой-ключ-от-deepl'"
+    ARGS=()
+    case "$ENGINE" in
+      ollama)
+        ARGS=(--api_format openai --api_base http://localhost:11434/v1 -m "''${MODEL:-qwen2.5:7b}")
+        ;;
+      openai)
+        if [ -z "$KEY" ]; then
+          echo "Ошибка: для openai нужен API-ключ (4-й аргумент или \$BBM_API_KEY)."
+          exit 1
+        fi
+        ARGS=(--api_format openai -m "''${MODEL:-gpt-4o-mini}" --key "$KEY")
+        ;;
+      anthropic)
+        if [ -z "$KEY" ]; then
+          echo "Ошибка: для anthropic нужен API-ключ (4-й аргумент или \$BBM_API_KEY)."
+          exit 1
+        fi
+        ARGS=(--api_format anthropic -m "''${MODEL:-claude-haiku-4-5-20251001}" --key "$KEY")
+        ;;
+      deepl)
+        if [ -z "$KEY" ]; then
+          echo "Ошибка: для DeepL нужен API-ключ (4-й аргумент или \$BBM_API_KEY)."
+          exit 1
+        fi
+        ARGS=(--api_format deepl --key "$KEY")
+        ;;
+      deeplfree)
+        ARGS=(--api_format deeplfree)
+        ;;
+      *)
+        echo "Неизвестный движок: $ENGINE (доступно: ollama openai anthropic deepl deeplfree)"
         exit 1
-      fi
-      ${bilingualBookMaker}/bin/bilingual_book_maker \
-        --book_name "$EPUB" \
-        --model_type deepl \
-        --deepl_key "$DEEPL_KEY" \
-        --language "ru"
-    else
-      ${bilingualBookMaker}/bin/bilingual_book_maker \
-        --book_name "$EPUB" \
-        --model_type "$ENGINE" \
-        --language "ru"
-    fi
-    echo "Готово! Создан файл: ''${BASE}_bilingual.epub"
+        ;;
+    esac
+
+    echo "Генерация билингвального издания через $ENGINE..."
+    ${bilingualBookMaker}/bin/bilingual_book_maker \
+      --book_name "$EPUB" \
+      --language ru \
+      --parallel-workers 4 \
+      --accumulated_num 2000 \
+      "''${ARGS[@]}"
+    echo "Готово! Проверь файлы рядом с $EPUB (обычно *_bilingual.epub)."
   '';
 in
 {
