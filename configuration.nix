@@ -30,6 +30,12 @@ in
   boot.kernelParams = [
     "nvidia-drm.modeset=1"
     "nvidia-drm.fbdev=1"
+    # Realtek BT 5.3 dongle (0bda:a729) fails its first descriptor read
+    # ("device descriptor read/64, error -32"), forcing a ~80s enumeration
+    # retry/reset that stalls boot ("A start job is running for
+    # /dev/disk/by-uuid/...") and shutdown alike. NO_LPM quirk skips the
+    # link-power-management negotiation that trips this up.
+    "usbcore.quirks=0bda:a729:k"
   ];
   boot.blacklistedKernelModules = [ "nouveau" ];
   # ===== Сеть =====

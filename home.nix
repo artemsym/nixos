@@ -219,7 +219,12 @@ in
         weatherLocation = "Saint-Petersburg";
         useFahrenheit = false;
         useTwelveHourClock = false;
-        smartScheme = true;
+        # Disabled: CUtils::getDominantColour (used for auto colour-scheme
+        # from wallpaper) races a QThreadPool worker against main-thread
+        # QJSValue/QML state in libcaelestia.so -- an upstream thread-safety
+        # bug, not fixable from here. It was the direct cause of the
+        # repeated SEGV/restart loop in the caelestia.service logs.
+        smartScheme = false;
         visualiserBars = 45;
       };
 
