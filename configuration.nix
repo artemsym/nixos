@@ -74,7 +74,7 @@ let
       echo "  ollama     -- локально, бесплатно, без ключа (нужен запущенный ollama + модель)"
       echo "  openai     -- translate-book книга.epub openai gpt-4o-mini sk-..."
       echo "  anthropic  -- translate-book книга.epub anthropic claude-haiku-4-5-20251001 sk-ant-..."
-      echo "  deepl      -- translate-book книга.epub deepl '' твой-ключ-от-deepl"
+      echo "  deepl      -- translate-book книга.epub deepl - твой-ключ-от-deepl"
       echo "  deeplfree  -- бесплатный DeepL без ключа (менее надёжный лимитами)"
       exit 1
     fi
