@@ -139,6 +139,7 @@ let
       --language ru \
       --parallel-workers 4 \
       --accumulated_num 2000 \
+      --translation_style "font-size: 0.85em; color: #808080;" \
       "''${ARGS[@]}"
     echo "Готово! Проверь файлы рядом с $EPUB (обычно *_bilingual.epub)."
   '';
@@ -321,6 +322,12 @@ in
     pulse.enable = true;
     jack.enable = true;
     wireplumber.enable = true;
+  };
+
+  # ===== Ollama (локальный движок для translate-book ollama) =====
+  services.ollama = {
+    enable = true;
+    acceleration = "cuda"; # RTX 2070
   };
 
   # ===== Bluetooth =====
