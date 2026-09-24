@@ -327,7 +327,7 @@ in
   # ===== Ollama (локальный движок для translate-book ollama) =====
   services.ollama = {
     enable = true;
-    acceleration = "cuda"; # RTX 2070
+    package = pkgs.ollama-cuda; # RTX 2070
   };
 
   # ===== Bluetooth =====
