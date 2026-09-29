@@ -314,7 +314,7 @@ in
       PartOf = [ "graphical-session.target" ];
     };
     Service = {
-      ExecStart = ''${pkgs.swayidle}/bin/swayidle -w timeout 300 "${caelestiaShellPkg}/bin/caelestia-shell ipc call lock lock" before-sleep "${caelestiaShellPkg}/bin/caelestia-shell ipc call lock lock"'';
+      ExecStart = ''${pkgs.swayidle}/bin/swayidle -w timeout 3600 "${caelestiaShellPkg}/bin/caelestia-shell ipc call lock lock" before-sleep "${caelestiaShellPkg}/bin/caelestia-shell ipc call lock lock"'';
       Restart = "on-failure";
       RestartSec = "3s";
     };
