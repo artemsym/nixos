@@ -11,138 +11,6 @@ let
       cp ${./sddm-theme/Main.qml} where_is_my_sddm_theme/Main.qml
     '';
   });
-
-  # Окружение Python со всеми библиотеками для парсинга и генерации epub
-  bilingualPythonEnv = pkgs.python3.withPackages (ps: with ps; [
-    requests
-    beautifulsoup4
-    tqdm
-    ebooklib
-    openai
-    tiktoken
-    rich
-    tenacity
-    lxml
-    anthropic
-    google-generativeai
-  ]);
-  # Исполняемый файл переводчика bilingual_book_maker. Апстрим недавно
-  # переехал на новый CLI (--model_type/--openai_model/--deepl_key больше
-  # не существуют, теперь --model/--api_format/--key) -- держим клон
-  # свежим через git pull, чтобы не залипнуть на несовместимой версии.
-  bilingualBookMaker = pkgs.writeShellScriptBin "bilingual_book_maker" ''
-    set -euo pipefail
-    APP_DIR="$HOME/.local/share/bilingual_book_maker"
-    if [ ! -d "$APP_DIR" ]; then
-      echo "Инициализация bilingual_book_maker в $APP_DIR..."
-      mkdir -p "$HOME/.local/share"
-      ${pkgs.git}/bin/git clone https://github.com/yihong0618/bilingual_book_maker.git "$APP_DIR"
-    else
-      ${pkgs.git}/bin/git -C "$APP_DIR" pull --ff-only --quiet || true
-    fi
-    exec ${bilingualPythonEnv}/bin/python "$APP_DIR/make_book.py" "$@"
-  '';
-
-  # Локальный конвертер PDF в чистый EPUB для читалки
-  pdf2epub = pkgs.writeShellScriptBin "pdf2epub" ''
-    set -euo pipefail
-    if [ "$#" -lt 1 ]; then
-      echo "Использование: pdf2epub <книга.pdf> [результат.epub]"
-      exit 1
-    fi
-    IN="$1"
-    if [ ! -f "$IN" ] && [ -f "$HOME/Загрузки/$IN" ]; then
-      IN="$HOME/Загрузки/$IN"
-    fi
-    OUT="''${2:-''${IN%.*}.epub}"
-    echo "Конвертация $IN в $OUT..."
-    ${pkgs.calibre}/bin/ebook-convert "$IN" "$OUT" \
-      --enable-heuristics \
-      --smarten-punctuation
-    echo "Готово: $OUT"
-  '';
-  # Автоматический конвейер: PDF/EPUB -> перевод -> билингвальный EPUB.
-  # Использует актуальный CLI bilingual_book_maker: --model/--api_format/
-  # --key вместо снятых --model_type/--openai_model/--deepl_key, плюс
-  # --parallel-workers и --accumulated_num для реальной скорости (без них
-  # каждый параграф шёл отдельным последовательным запросом -- отсюда и
-  # 2 часа на 5 книг).
-  translateBook = pkgs.writeShellScriptBin "translate-book" ''
-    set -euo pipefail
-    if [ "$#" -lt 1 ]; then
-      echo "Использование: translate-book <файл.pdf|файл.epub> [движок: ollama|openai|anthropic|deepl|deeplfree] [модель] [ключ]"
-      echo "  ollama     -- локально, бесплатно, без ключа (нужен запущенный ollama + модель)"
-      echo "  openai     -- translate-book книга.epub openai gpt-4o-mini sk-..."
-      echo "  anthropic  -- translate-book книга.epub anthropic claude-haiku-4-5-20251001 sk-ant-..."
-      echo "  deepl      -- translate-book книга.epub deepl - твой-ключ-от-deepl"
-      echo "  deeplfree  -- бесплатный DeepL без ключа (менее надёжный лимитами)"
-      exit 1
-    fi
-    IN="$1"
-    ENGINE="''${2:-ollama}"
-    MODEL="''${3:-}"
-    KEY="''${4:-''${BBM_API_KEY:-}}"
-
-    if [ ! -f "$IN" ] && [ -f "$HOME/Загрузки/$IN" ]; then
-      IN="$HOME/Загрузки/$IN"
-    fi
-
-    BASE="''${IN%.*}"
-    EPUB="$IN"
-
-    if [[ "$IN" == *.pdf ]]; then
-      EPUB="''${BASE}.epub"
-      if [ ! -f "$EPUB" ]; then
-        echo "Конвертация PDF в EPUB..."
-        ${pkgs.calibre}/bin/ebook-convert "$IN" "$EPUB" --enable-heuristics --smarten-punctuation
-      fi
-    fi
-
-    ARGS=()
-    case "$ENGINE" in
-      ollama)
-        ARGS=(--api_format openai --api_base http://localhost:11434/v1 -m "''${MODEL:-qwen2.5:7b}")
-        ;;
-      openai)
-        if [ -z "$KEY" ]; then
-          echo "Ошибка: для openai нужен API-ключ (4-й аргумент или \$BBM_API_KEY)."
-          exit 1
-        fi
-        ARGS=(--api_format openai -m "''${MODEL:-gpt-4o-mini}" --key "$KEY")
-        ;;
-      anthropic)
-        if [ -z "$KEY" ]; then
-          echo "Ошибка: для anthropic нужен API-ключ (4-й аргумент или \$BBM_API_KEY)."
-          exit 1
-        fi
-        ARGS=(--api_format anthropic -m "''${MODEL:-claude-haiku-4-5-20251001}" --key "$KEY")
-        ;;
-      deepl)
-        if [ -z "$KEY" ]; then
-          echo "Ошибка: для DeepL нужен API-ключ (4-й аргумент или \$BBM_API_KEY)."
-          exit 1
-        fi
-        ARGS=(--api_format deepl --key "$KEY")
-        ;;
-      deeplfree)
-        ARGS=(--api_format deeplfree)
-        ;;
-      *)
-        echo "Неизвестный движок: $ENGINE (доступно: ollama openai anthropic deepl deeplfree)"
-        exit 1
-        ;;
-    esac
-
-    echo "Генерация билингвального издания через $ENGINE..."
-    ${bilingualBookMaker}/bin/bilingual_book_maker \
-      --book_name "$EPUB" \
-      --language ru \
-      --parallel-workers 4 \
-      --accumulated_num 2000 \
-      --translation_style "font-size: 0.85em; color: #808080;" \
-      "''${ARGS[@]}"
-    echo "Готово! Проверь файлы рядом с $EPUB (обычно *_bilingual.epub)."
-  '';
 in
 {
   imports = [ ./hardware-configuration.nix ];
@@ -324,12 +192,6 @@ in
     wireplumber.enable = true;
   };
 
-  # ===== Ollama (локальный движок для translate-book ollama) =====
-  services.ollama = {
-    enable = true;
-    package = pkgs.ollama-cuda; # RTX 2070
-  };
-
   # ===== Bluetooth =====
   hardware.bluetooth.enable = true;
   hardware.bluetooth.powerOnBoot = true;
@@ -443,11 +305,8 @@ in
     # --- Медиа ---
     telegram-desktop playerctl mpv ffmpeg yt-dlp imagemagick
 
-    # --- Чтение, верстка и перевод ---
+    # --- Чтение ---
     jmtpfs zotero calibre onlyoffice-desktopeditors zathura
-    pdf2epub              # Локальная конвертация PDF -> EPUB с очисткой верстки
-    translateBook         # Автоматический пайплайн двуязычного перевода
-    bilingualBookMaker    # CLI утилита параллельного перевода
 
     # --- Текст ---
     pandoc bibata-cursors rnote
