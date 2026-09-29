@@ -184,6 +184,15 @@ in
     pulse.enable = true;
     jack.enable = true;
     wireplumber.enable = true;
+    # Не переключать Bluetooth-наушники в телефонный HFP-профиль, когда игра
+    # (Dota) открывает микрофон: иначе звук на всём компе становится узким,
+    # без низких частот ("как из ведра"). Микрофон наушников при этом
+    # недоступен -- для голоса нужен отдельный микрофон.
+    wireplumber.extraConfig."51-no-bt-headset-autoswitch" = {
+      "wireplumber.settings" = {
+        "bluetooth.autoswitch-to-headset-profile" = false;
+      };
+    };
   };
 
   # ===== Bluetooth =====
