@@ -28,11 +28,6 @@ in
   boot.kernelParams = [
     "nvidia-drm.modeset=1"
     "nvidia-drm.fbdev=1"
-    # ata4 has a device that never answers (hardreset fails after ~60s), and
-    # the root disk on ata5 only gets its partitions scanned after that, so
-    # boot/resume stall. Disabled until the drive/cable is fixed; remove this
-    # line once ata4 works again.
-    "libata.force=4:disable"
   ];
   boot.blacklistedKernelModules = [ "nouveau" ];
 
@@ -207,6 +202,15 @@ in
     enable = true;
     nssmdns4 = true;
     openFirewall = true;
+  };
+
+  # ===== Игровой диск (SSD 240G, ext4, метка "games") =====
+  # По метке, потому что sda/sdb меняются местами между загрузками.
+  # nofail + короткий таймаут: если диск не подключён, загрузка не ждёт.
+  fileSystems."/mnt/games" = {
+    device = "/dev/disk/by-label/games";
+    fsType = "ext4";
+    options = [ "nofail" "x-systemd.device-timeout=5s" ];
   };
 
   # ===== Steam =====
