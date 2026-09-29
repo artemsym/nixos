@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }:
+{ config, lib, pkgs, inputs, ... }:
 let
   caelestiaShellPkg = (inputs.niri-caelestia-shell.packages.${pkgs.stdenv.hostPlatform.system}.caelestia-shell.override {
     # upstream's nix/app2unit.nix pins app2unit 1.0.3 but inherits nixpkgs'
@@ -240,6 +240,14 @@ in
       };
     };
   };
+
+  # ===== Caelestia colour scheme =====
+  # Static blue scheme (black accents) read by the shell from
+  # ~/.local/state/caelestia/scheme.json. Copied as a plain file (not a
+  # store symlink) so `caelestia scheme set` can still overwrite it.
+  home.activation.caelestiaScheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run ${pkgs.coreutils}/bin/install -Dm644 ${./caelestia-scheme.json} "$HOME/.local/state/caelestia/scheme.json"
+  '';
 
   # ===== Foot =====
   programs.foot = {
