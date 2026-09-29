@@ -16,6 +16,11 @@ let
     postPatch = (old.postPatch or "") + ''
       cp ${./caelestia-patches/Media.qml} modules/dashboard/Media.qml
       cp ${./caelestia-patches/bongocat.gif} assets/bongocat.gif
+      # Drop the crash-prone CUtils.getDominantColour/getAverageLuminance
+      # calls (QJSValue used from a worker thread in libcaelestia.so).
+      cp ${./caelestia-patches/ColouredIcon.qml} components/effects/ColouredIcon.qml
+      substituteInPlace services/Colours.qml \
+        --replace-fail "CUtils.getAverageLuminance(current, l => {" "((c, cb) => {})(current, l => {"
     '';
   });
 in
