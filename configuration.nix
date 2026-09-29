@@ -28,12 +28,11 @@ in
   boot.kernelParams = [
     "nvidia-drm.modeset=1"
     "nvidia-drm.fbdev=1"
-    # Realtek BT 5.3 dongle (0bda:a729) fails its first descriptor read
-    # ("device descriptor read/64, error -32"), forcing a ~80s enumeration
-    # retry/reset that stalls boot ("A start job is running for
-    # /dev/disk/by-uuid/...") and shutdown alike. NO_LPM quirk skips the
-    # link-power-management negotiation that trips this up.
-    "usbcore.quirks=0bda:a729:k"
+    # ata4 has a device that never answers (hardreset fails after ~60s), and
+    # the root disk on ata5 only gets its partitions scanned after that, so
+    # boot/resume stall. Disabled until the drive/cable is fixed; remove this
+    # line once ata4 works again.
+    "libata.force=4:disable"
   ];
   boot.blacklistedKernelModules = [ "nouveau" ];
 
