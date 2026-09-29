@@ -71,6 +71,7 @@ in
       "QT_QPA_PLATFORMTHEME=gtk3"
       "QS_ICON_THEME=Papirus-Dark"
       "QML_DISABLE_DISK_CACHE=1"
+      "LC_TIME=en_US.UTF-8" # english month/day names in the dashboard calendar
     ];
 
     settings = {
